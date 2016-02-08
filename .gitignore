@@ -1,0 +1,7 @@
+.project
+.settings
+.cproject
+*.o
+*~
+*.bk
+recode_c
