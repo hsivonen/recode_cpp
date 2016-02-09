@@ -10,6 +10,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include <stdbool.h>
+
+typedef struct _Encoding Encoding;
+typedef struct _Decoder Decoder;
+typedef struct _Encoder Encoder;
+#include "encoding_rs.h"
 
 int
 main(int argc, char** argv)
@@ -22,9 +28,14 @@ main(int argc, char** argv)
     { "help", no_argument, NULL, 'h' },
     { 0, 0, 0, 0 }
   };
+
+  bool use_utf16 = false;
+  Encoding* input_encoding = NULL; // TODO: default to UTF-8
+  Encoding* output_encoding = NULL; // TODO: default to UTF-8
+  FILE* output = stdout;
+
   for (;;) {
     int option_index = 0;
-
     int c = getopt_long(argc, argv, "o:e:g:uh", long_options, &option_index);
     if (c == -1) {
       break;
@@ -35,12 +46,14 @@ main(int argc, char** argv)
     }
     switch (c) {
     case 'o':
+
     case 'e':
     case 'g':
     case 'u':
     case 'h':
     case '?':
     default:
+      break;
     }
   }
 }
