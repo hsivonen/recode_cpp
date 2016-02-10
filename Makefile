@@ -8,9 +8,18 @@
 # except according to those terms.
 
 CFLAGS = -Wall -Wextra -std=c11 -I../encoding-rs/target/include/
-OBS = recode_c.o
+LDFLAGS = -Wl,--gc-sections -ldl -lpthread -lgcc_s -lrt -lc -lm
 
-recode_c: $(OBJS)
+recode_c: recode_c.o ../encoding-rs/target/release/libencoding_rs.a
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+../encoding-rs/target/release/libencoding_rs.a: cargo
+
+../encoding-rs/target/include/encoding_rs.h: cargo
+
+.PHONY: cargo
+cargo:
+	cd ../encoding-rs; cargo build --release
 
 .PHONY: all
 all: recode_c
