@@ -7,7 +7,7 @@
 # option. This file may not be copied, modified, or distributed
 # except according to those terms.
 
-CFLAGS = -Wall -Wextra -std=c11 -I../encoding-rs/target/include/
+CFLAGS = -Wall -Wextra -Werror -O3 -std=c11 -I../encoding-rs/target/include/
 LDFLAGS = -Wl,--gc-sections -ldl -lpthread -lgcc_s -lrt -lc -lm
 
 recode_c: recode_c.o ../encoding-rs/target/release/libencoding_rs.a
