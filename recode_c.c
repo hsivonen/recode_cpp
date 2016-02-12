@@ -18,6 +18,8 @@ typedef struct _Decoder Decoder;
 typedef struct _Encoder Encoder;
 #include "encoding_rs.h"
 
+#define INPUT_EMPTY 0
+
 const Encoding*
 get_encoding(const char* label)
 {
@@ -50,22 +52,81 @@ print_usage(const char* program)
     program);
 }
 
+#define INPUT_BUFFER_SIZE 2048
+#define UTF8_INTERMEDIATE_BUFFER_SIZE 4096
+#define UTF16_INTERMEDIATE_BUFFER_SIZE 2048
+#define OUTPUT_BUFFER_SIZE 4096
+
 void
 convert_via_utf8(Decoder* decoder, Encoder* encoder, FILE* read, FILE* write,
                  bool last)
 {
-  uint8_t input_buffer[2048];
-  uint8_t intermediate_buffer[2048];
-  uint8_t output_buffer[4096];
+  uint8_t input_buffer[INPUT_BUFFER_SIZE];
+  uint8_t intermediate_buffer[UTF8_INTERMEDIATE_BUFFER_SIZE];
+  uint8_t output_buffer[OUTPUT_BUFFER_SIZE];
 
   bool current_input_ended = false;
   while (!current_input_ended) {
-    size_t decoder_input_end = fread(input_buffer, 1, 2048, read);
+    size_t decoder_input_end = fread(input_buffer, 1, INPUT_BUFFER_SIZE, read);
     if (ferror(read)) {
       fprintf(stderr, "Error reading input.");
       exit(-5);
     }
-    // TODO
+    current_input_ended = (decoder_input_end == 0);
+    bool input_ended = last && current_input_ended;
+    size_t decoder_input_start = 0;
+    for (;;) {
+      bool had_replacements;
+      size_t decoder_read = decoder_input_end - decoder_input_start;
+      size_t decoder_written = UTF8_INTERMEDIATE_BUFFER_SIZE;
+      uint32_t decoder_result = decoder_decode_to_utf8_with_replacement(
+        decoder, input_buffer + decoder_input_start, &decoder_read,
+        intermediate_buffer, &decoder_written, input_ended, &had_replacements);
+      decoder_input_start += decoder_read;
+
+      bool last_output = (input_ended && (decoder_result == INPUT_EMPTY));
+
+      // Regardless of whether the intermediate buffer got full
+      // or the input buffer was exhausted, let's process what's
+      // in the intermediate buffer.
+
+      const char* utf8_name = "UTF-8"; // TODO: use extern constant
+      if (encoder_encoding(encoder) ==
+          encoding_for_name((const uint8_t*)utf8_name, strlen(utf8_name))) {
+        // If the target is UTF-8, optimize out the encoder.
+        size_t file_written =
+          fwrite(intermediate_buffer, 1, decoder_written, write);
+        if (file_written != decoder_written) {
+          fprintf(stderr, "Error writing output.");
+          exit(-7);
+        }
+      } else {
+        size_t encoder_input_start = 0;
+        for (;;) {
+          size_t encoder_read = decoder_written - encoder_input_start;
+          size_t encoder_written = OUTPUT_BUFFER_SIZE;
+          uint32_t encoder_result = encoder_encode_from_utf8_with_replacement(
+            encoder, intermediate_buffer + encoder_input_start, &encoder_read,
+            output_buffer, &encoder_written, last_output, &had_replacements);
+          encoder_input_start += encoder_read;
+          size_t file_written =
+            fwrite(output_buffer, 1, encoder_written, write);
+          if (file_written != encoder_written) {
+            fprintf(stderr, "Error writing output.");
+            exit(-6);
+          }
+          if (encoder_result == INPUT_EMPTY) {
+            break;
+          }
+        }
+      }
+
+      // Now let's see if we should read again or process the
+      // rest of the current input buffer.
+      if (decoder_result == INPUT_EMPTY) {
+        break;
+      }
+    }
   }
 }
 
@@ -73,6 +134,60 @@ void
 convert_via_utf16(Decoder* decoder, Encoder* encoder, FILE* read, FILE* write,
                   bool last)
 {
+  uint8_t input_buffer[INPUT_BUFFER_SIZE];
+  uint16_t intermediate_buffer[UTF16_INTERMEDIATE_BUFFER_SIZE];
+  uint8_t output_buffer[OUTPUT_BUFFER_SIZE];
+
+  bool current_input_ended = false;
+  while (!current_input_ended) {
+    size_t decoder_input_end = fread(input_buffer, 1, INPUT_BUFFER_SIZE, read);
+    if (ferror(read)) {
+      fprintf(stderr, "Error reading input.");
+      exit(-5);
+    }
+    current_input_ended = (decoder_input_end == 0);
+    bool input_ended = last && current_input_ended;
+    size_t decoder_input_start = 0;
+    for (;;) {
+      bool had_replacements;
+      size_t decoder_read = decoder_input_end - decoder_input_start;
+      size_t decoder_written = UTF16_INTERMEDIATE_BUFFER_SIZE;
+      uint32_t decoder_result = decoder_decode_to_utf16_with_replacement(
+        decoder, input_buffer + decoder_input_start, &decoder_read,
+        intermediate_buffer, &decoder_written, input_ended, &had_replacements);
+      decoder_input_start += decoder_read;
+
+      bool last_output = (input_ended && (decoder_result == INPUT_EMPTY));
+
+      // Regardless of whether the intermediate buffer got full
+      // or the input buffer was exhausted, let's process what's
+      // in the intermediate buffer.
+
+      size_t encoder_input_start = 0;
+      for (;;) {
+        size_t encoder_read = decoder_written - encoder_input_start;
+        size_t encoder_written = OUTPUT_BUFFER_SIZE;
+        uint32_t encoder_result = encoder_encode_from_utf16_with_replacement(
+          encoder, intermediate_buffer + encoder_input_start, &encoder_read,
+          output_buffer, &encoder_written, last_output, &had_replacements);
+        encoder_input_start += encoder_read;
+        size_t file_written = fwrite(output_buffer, 1, encoder_written, write);
+        if (file_written != encoder_written) {
+          fprintf(stderr, "Error writing output.");
+          exit(-6);
+        }
+        if (encoder_result == INPUT_EMPTY) {
+          break;
+        }
+      }
+
+      // Now let's see if we should read again or process the
+      // rest of the current input buffer.
+      if (decoder_result == INPUT_EMPTY) {
+        break;
+      }
+    }
+  }
 }
 
 void
@@ -99,8 +214,11 @@ main(int argc, char** argv)
   };
 
   bool use_utf16 = false;
-  const Encoding* input_encoding = NULL;  // TODO: default to UTF-8
-  const Encoding* output_encoding = NULL; // TODO: default to UTF-8
+  const char* utf8_name = "UTF-8";
+  const Encoding* input_encoding = encoding_for_name(
+    (const uint8_t*)utf8_name, strlen(utf8_name)); // TODO: Use extern constant
+  const Encoding* output_encoding = encoding_for_name(
+    (const uint8_t*)utf8_name, strlen(utf8_name)); // TODO: Use extern constant
   FILE* output = stdout;
 
   for (;;) {
