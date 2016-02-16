@@ -13,12 +13,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-typedef struct _Encoding Encoding;
-typedef struct _Decoder Decoder;
-typedef struct _Encoder Encoder;
 #include "encoding_rs.h"
-
-#define INPUT_EMPTY 0
 
 const Encoding*
 get_encoding(const char* label)
@@ -90,9 +85,7 @@ convert_via_utf8(Decoder* decoder, Encoder* encoder, FILE* read, FILE* write,
       // or the input buffer was exhausted, let's process what's
       // in the intermediate buffer.
 
-      const char* utf8_name = "UTF-8"; // TODO: use extern constant
-      if (encoder_encoding(encoder) ==
-          encoding_for_name((const uint8_t*)utf8_name, strlen(utf8_name))) {
+      if (encoder_encoding(encoder) == UTF_8_ENCODING) {
         // If the target is UTF-8, optimize out the encoder.
         size_t file_written =
           fwrite(intermediate_buffer, 1, decoder_written, write);
@@ -214,11 +207,8 @@ main(int argc, char** argv)
   };
 
   bool use_utf16 = false;
-  const char* utf8_name = "UTF-8";
-  const Encoding* input_encoding = encoding_for_name(
-    (const uint8_t*)utf8_name, strlen(utf8_name)); // TODO: Use extern constant
-  const Encoding* output_encoding = encoding_for_name(
-    (const uint8_t*)utf8_name, strlen(utf8_name)); // TODO: Use extern constant
+  const Encoding* input_encoding = UTF_8_ENCODING;
+  const Encoding* output_encoding = UTF_8_ENCODING;
   FILE* output = stdout;
 
   for (;;) {
