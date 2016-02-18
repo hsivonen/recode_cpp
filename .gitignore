@@ -4,4 +4,4 @@
 *.o
 *~
 *.bk
-recode_c
+recode_cpp

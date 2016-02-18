@@ -10,7 +10,7 @@
 CPPFLAGS = -Wall -Wextra -Werror -O3 -std=c++14 -I../encoding-rs/target/include/ -I../encoding-rs/include/ -I../GSL/include/
 LDFLAGS = -Wl,--gc-sections -ldl -lpthread -lgcc_s -lrt -lc -lm
 
-recode_c: recode_cpp.o ../encoding-rs/target/release/libencoding_rs.a
+recode_cpp: recode_cpp.o ../encoding-rs/target/release/libencoding_rs.a
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 ../encoding-rs/target/release/libencoding_rs.a: cargo
