@@ -19,7 +19,7 @@ const Encoding*
 get_encoding(const char* label)
 {
   const Encoding* enc =
-    encoding_for_label((const uint8_t*)label, strlen(label));
+    Encoding::for_label(gsl::cstring_span<>(label, strlen(label)));
   if (!enc) {
     fprintf(stderr, "%s is not a known encoding label; exiting.", label);
     exit(-2);
@@ -53,7 +53,7 @@ print_usage(const char* program)
 #define OUTPUT_BUFFER_SIZE 4096
 
 void
-convert_via_utf8(Decoder* decoder, Encoder* encoder, FILE* read, FILE* write,
+convert_via_utf8(Decoder& decoder, Encoder& encoder, FILE* read, FILE* write,
                  bool last)
 {
   uint8_t input_buffer[INPUT_BUFFER_SIZE];
@@ -71,12 +71,17 @@ convert_via_utf8(Decoder* decoder, Encoder* encoder, FILE* read, FILE* write,
     bool input_ended = last && current_input_ended;
     size_t decoder_input_start = 0;
     for (;;) {
-      bool had_replacements;
-      size_t decoder_read = decoder_input_end - decoder_input_start;
-      size_t decoder_written = UTF8_INTERMEDIATE_BUFFER_SIZE;
-      uint32_t decoder_result = decoder_decode_to_utf8_with_replacement(
-        decoder, input_buffer + decoder_input_start, &decoder_read,
-        intermediate_buffer, &decoder_written, input_ended, &had_replacements);
+      size_t decoder_read;
+      size_t decoder_written;
+      uint32_t decoder_result;
+
+      std::tie(decoder_result, decoder_read, decoder_written, std::ignore) =
+        decoder.decode_to_utf8_with_replacement(
+          gsl::span<const uint8_t>(input_buffer + decoder_input_start,
+                                   decoder_input_end - decoder_input_start),
+          gsl::span<uint8_t>(intermediate_buffer,
+                             UTF8_INTERMEDIATE_BUFFER_SIZE),
+          input_ended);
       decoder_input_start += decoder_read;
 
       bool last_output = (input_ended && (decoder_result == INPUT_EMPTY));
@@ -85,7 +90,7 @@ convert_via_utf8(Decoder* decoder, Encoder* encoder, FILE* read, FILE* write,
       // or the input buffer was exhausted, let's process what's
       // in the intermediate buffer.
 
-      if (encoder_encoding(encoder) == UTF_8_ENCODING) {
+      if (encoder.encoding() == UTF_8_ENCODING) {
         // If the target is UTF-8, optimize out the encoder.
         size_t file_written =
           fwrite(intermediate_buffer, 1, decoder_written, write);
@@ -96,11 +101,17 @@ convert_via_utf8(Decoder* decoder, Encoder* encoder, FILE* read, FILE* write,
       } else {
         size_t encoder_input_start = 0;
         for (;;) {
-          size_t encoder_read = decoder_written - encoder_input_start;
-          size_t encoder_written = OUTPUT_BUFFER_SIZE;
-          uint32_t encoder_result = encoder_encode_from_utf8_with_replacement(
-            encoder, intermediate_buffer + encoder_input_start, &encoder_read,
-            output_buffer, &encoder_written, last_output, &had_replacements);
+          size_t encoder_read;
+          size_t encoder_written;
+          uint32_t encoder_result;
+
+          std::tie(encoder_result, encoder_read, encoder_written, std::ignore) =
+            encoder.encode_from_utf8_with_replacement(
+              gsl::span<const uint8_t>(intermediate_buffer +
+                                         encoder_input_start,
+                                       decoder_written - encoder_input_start),
+              gsl::span<uint8_t>(output_buffer, OUTPUT_BUFFER_SIZE),
+              last_output);
           encoder_input_start += encoder_read;
           size_t file_written =
             fwrite(output_buffer, 1, encoder_written, write);
@@ -124,7 +135,7 @@ convert_via_utf8(Decoder* decoder, Encoder* encoder, FILE* read, FILE* write,
 }
 
 void
-convert_via_utf16(Decoder* decoder, Encoder* encoder, FILE* read, FILE* write,
+convert_via_utf16(Decoder& decoder, Encoder& encoder, FILE* read, FILE* write,
                   bool last)
 {
   uint8_t input_buffer[INPUT_BUFFER_SIZE];
@@ -142,12 +153,17 @@ convert_via_utf16(Decoder* decoder, Encoder* encoder, FILE* read, FILE* write,
     bool input_ended = last && current_input_ended;
     size_t decoder_input_start = 0;
     for (;;) {
-      bool had_replacements;
-      size_t decoder_read = decoder_input_end - decoder_input_start;
-      size_t decoder_written = UTF16_INTERMEDIATE_BUFFER_SIZE;
-      uint32_t decoder_result = decoder_decode_to_utf16_with_replacement(
-        decoder, input_buffer + decoder_input_start, &decoder_read,
-        intermediate_buffer, &decoder_written, input_ended, &had_replacements);
+      size_t decoder_read;
+      size_t decoder_written;
+      uint32_t decoder_result;
+
+      std::tie(decoder_result, decoder_read, decoder_written, std::ignore) =
+        decoder.decode_to_utf16_with_replacement(
+          gsl::span<const uint8_t>(input_buffer + decoder_input_start,
+                                   decoder_input_end - decoder_input_start),
+          gsl::span<char16_t>(intermediate_buffer,
+                              UTF16_INTERMEDIATE_BUFFER_SIZE),
+          input_ended);
       decoder_input_start += decoder_read;
 
       bool last_output = (input_ended && (decoder_result == INPUT_EMPTY));
@@ -158,11 +174,15 @@ convert_via_utf16(Decoder* decoder, Encoder* encoder, FILE* read, FILE* write,
 
       size_t encoder_input_start = 0;
       for (;;) {
-        size_t encoder_read = decoder_written - encoder_input_start;
-        size_t encoder_written = OUTPUT_BUFFER_SIZE;
-        uint32_t encoder_result = encoder_encode_from_utf16_with_replacement(
-          encoder, intermediate_buffer + encoder_input_start, &encoder_read,
-          output_buffer, &encoder_written, last_output, &had_replacements);
+        size_t encoder_read;
+        size_t encoder_written;
+        uint32_t encoder_result;
+
+        std::tie(encoder_result, encoder_read, encoder_written, std::ignore) =
+          encoder.encode_from_utf16_with_replacement(
+            gsl::span<const char16_t>(intermediate_buffer + encoder_input_start,
+                                      decoder_written - encoder_input_start),
+            gsl::span<uint8_t>(output_buffer, OUTPUT_BUFFER_SIZE), last_output);
         encoder_input_start += encoder_read;
         size_t file_written = fwrite(output_buffer, 1, encoder_written, write);
         if (file_written != encoder_written) {
@@ -184,7 +204,7 @@ convert_via_utf16(Decoder* decoder, Encoder* encoder, FILE* read, FILE* write,
 }
 
 void
-convert(Decoder* decoder, Encoder* encoder, FILE* read, FILE* write, bool last,
+convert(Decoder& decoder, Encoder& encoder, FILE* read, FILE* write, bool last,
         bool use_utf16)
 {
   if (use_utf16) {
@@ -249,11 +269,11 @@ main(int argc, char** argv)
     }
   }
 
-  Decoder* decoder = encoding_new_decoder(input_encoding);
-  Encoder* encoder = encoding_new_encoder(output_encoding);
+  std::unique_ptr<Decoder> decoder = input_encoding->new_decoder();
+  std::unique_ptr<Encoder> encoder = output_encoding->new_encoder();
 
   if (optind == argc) {
-    convert(decoder, encoder, stdin, output, true, use_utf16);
+    convert(*decoder, *encoder, stdin, output, true, use_utf16);
   } else {
     while (optind < argc) {
       const char* path = argv[optind++];
@@ -262,13 +282,9 @@ main(int argc, char** argv)
         fprintf(stderr, "Cannot open %s for reading; exiting.", path);
         exit(-4);
       }
-      convert(decoder, encoder, read, output, (optind == argc), use_utf16);
+      convert(*decoder, *encoder, read, output, (optind == argc), use_utf16);
     }
   }
 
-  // If we exit() early, we leak these, which isn't valgrind-clean, but doesn't
-  // matter.
-  decoder_free(decoder);
-  encoder_free(encoder);
   exit(0);
 }
