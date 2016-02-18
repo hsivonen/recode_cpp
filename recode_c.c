@@ -128,7 +128,7 @@ convert_via_utf16(Decoder* decoder, Encoder* encoder, FILE* read, FILE* write,
                   bool last)
 {
   uint8_t input_buffer[INPUT_BUFFER_SIZE];
-  uint16_t intermediate_buffer[UTF16_INTERMEDIATE_BUFFER_SIZE];
+  char16_t intermediate_buffer[UTF16_INTERMEDIATE_BUFFER_SIZE];
   uint8_t output_buffer[OUTPUT_BUFFER_SIZE];
 
   bool current_input_ended = false;
