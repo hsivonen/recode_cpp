@@ -13,7 +13,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "encoding_rs.h"
+#include "encoding_rs_cpp.h"
 
 const Encoding*
 get_encoding(const char* label)

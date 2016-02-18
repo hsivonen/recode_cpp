@@ -7,10 +7,10 @@
 # option. This file may not be copied, modified, or distributed
 # except according to those terms.
 
-CFLAGS = -Wall -Wextra -Werror -O3 -std=c11 -I../encoding-rs/target/include/ -I../encoding-rs/include/
+CPPFLAGS = -Wall -Wextra -Werror -O3 -std=c++14 -I../encoding-rs/target/include/ -I../encoding-rs/include/ -I../GSL/include/
 LDFLAGS = -Wl,--gc-sections -ldl -lpthread -lgcc_s -lrt -lc -lm
 
-recode_c: recode_c.o ../encoding-rs/target/release/libencoding_rs.a
+recode_c: recode_cpp.o ../encoding-rs/target/release/libencoding_rs.a
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 ../encoding-rs/target/release/libencoding_rs.a: cargo
@@ -22,12 +22,12 @@ cargo:
 	cd ../encoding-rs; cargo build --release
 
 .PHONY: all
-all: recode_c
+all: recode_cpp
 
 .PHONY: fmt
 fmt:
-	clang-format-3.7 --style=mozilla -i *.c
+	clang-format-3.7 --style=mozilla -i *.cpp
 
 .PHONY: clean
 clean:
-	rm recode_c
+	rm recode_cpp
