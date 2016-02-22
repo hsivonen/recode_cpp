@@ -38,15 +38,27 @@ Edit `encoding-rs/Cargo.toml` and uncomment the line
 (The line is commented out due to a
 [rustfmt bug](https://github.com/rust-lang-nursery/rustfmt/issues/828).)
 
-###3. Clone recode-c
+###3. Clone GSL
 
 ```
-git clone https://github.com/hsivonen/recode-c.git
+git clone https://github.com/Microsoft/GSL.git
 ```
 
-###4. Build recode-c
+###4. Clone recode-cpp
 
 ```
-cd recode-c
+git clone https://github.com/hsivonen/recode-cpp.git
+```
+
+###5. Build recode-cpp
+
+```
+cd recode-cpp
 make
+```
+
+###6. Run it
+
+```
+./recode_cpp --help
 ```
