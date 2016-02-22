@@ -56,13 +56,14 @@ void
 convert_via_utf8(Decoder& decoder, Encoder& encoder, FILE* read, FILE* write,
                  bool last)
 {
-  uint8_t input_buffer[INPUT_BUFFER_SIZE];
-  uint8_t intermediate_buffer[UTF8_INTERMEDIATE_BUFFER_SIZE];
-  uint8_t output_buffer[OUTPUT_BUFFER_SIZE];
+  std::array<uint8_t, INPUT_BUFFER_SIZE> input_buffer;
+  std::array<uint8_t, UTF8_INTERMEDIATE_BUFFER_SIZE> intermediate_buffer;
+  std::array<uint8_t, OUTPUT_BUFFER_SIZE> output_buffer;
 
   bool current_input_ended = false;
   while (!current_input_ended) {
-    size_t decoder_input_end = fread(input_buffer, 1, INPUT_BUFFER_SIZE, read);
+    size_t decoder_input_end =
+      fread(input_buffer.data(), 1, input_buffer.size(), read);
     if (ferror(read)) {
       fprintf(stderr, "Error reading input.");
       exit(-5);
@@ -77,11 +78,10 @@ convert_via_utf8(Decoder& decoder, Encoder& encoder, FILE* read, FILE* write,
 
       std::tie(decoder_result, decoder_read, decoder_written, std::ignore) =
         decoder.decode_to_utf8_with_replacement(
-          gsl::span<const uint8_t>(input_buffer + decoder_input_start,
-                                   decoder_input_end - decoder_input_start),
-          gsl::span<uint8_t>(intermediate_buffer,
-                             UTF8_INTERMEDIATE_BUFFER_SIZE),
-          input_ended);
+          gsl::as_span(input_buffer)
+            .subspan(decoder_input_start,
+                     decoder_input_end - decoder_input_start),
+          intermediate_buffer, input_ended);
       decoder_input_start += decoder_read;
 
       bool last_output = (input_ended && (decoder_result == INPUT_EMPTY));
@@ -93,7 +93,7 @@ convert_via_utf8(Decoder& decoder, Encoder& encoder, FILE* read, FILE* write,
       if (encoder.encoding() == UTF_8_ENCODING) {
         // If the target is UTF-8, optimize out the encoder.
         size_t file_written =
-          fwrite(intermediate_buffer, 1, decoder_written, write);
+          fwrite(intermediate_buffer.data(), 1, decoder_written, write);
         if (file_written != decoder_written) {
           fprintf(stderr, "Error writing output.");
           exit(-7);
@@ -107,14 +107,13 @@ convert_via_utf8(Decoder& decoder, Encoder& encoder, FILE* read, FILE* write,
 
           std::tie(encoder_result, encoder_read, encoder_written, std::ignore) =
             encoder.encode_from_utf8_with_replacement(
-              gsl::span<const uint8_t>(intermediate_buffer +
-                                         encoder_input_start,
-                                       decoder_written - encoder_input_start),
-              gsl::span<uint8_t>(output_buffer, OUTPUT_BUFFER_SIZE),
-              last_output);
+              gsl::as_span(intermediate_buffer)
+                .subspan(encoder_input_start,
+                         decoder_written - encoder_input_start),
+              output_buffer, last_output);
           encoder_input_start += encoder_read;
           size_t file_written =
-            fwrite(output_buffer, 1, encoder_written, write);
+            fwrite(output_buffer.data(), 1, encoder_written, write);
           if (file_written != encoder_written) {
             fprintf(stderr, "Error writing output.");
             exit(-6);
@@ -138,13 +137,14 @@ void
 convert_via_utf16(Decoder& decoder, Encoder& encoder, FILE* read, FILE* write,
                   bool last)
 {
-  uint8_t input_buffer[INPUT_BUFFER_SIZE];
-  char16_t intermediate_buffer[UTF16_INTERMEDIATE_BUFFER_SIZE];
-  uint8_t output_buffer[OUTPUT_BUFFER_SIZE];
+  std::array<uint8_t, INPUT_BUFFER_SIZE> input_buffer;
+  std::array<char16_t, UTF16_INTERMEDIATE_BUFFER_SIZE> intermediate_buffer;
+  std::array<uint8_t, OUTPUT_BUFFER_SIZE> output_buffer;
 
   bool current_input_ended = false;
   while (!current_input_ended) {
-    size_t decoder_input_end = fread(input_buffer, 1, INPUT_BUFFER_SIZE, read);
+    size_t decoder_input_end =
+      fread(input_buffer.data(), 1, input_buffer.size(), read);
     if (ferror(read)) {
       fprintf(stderr, "Error reading input.");
       exit(-5);
@@ -159,11 +159,10 @@ convert_via_utf16(Decoder& decoder, Encoder& encoder, FILE* read, FILE* write,
 
       std::tie(decoder_result, decoder_read, decoder_written, std::ignore) =
         decoder.decode_to_utf16_with_replacement(
-          gsl::span<const uint8_t>(input_buffer + decoder_input_start,
-                                   decoder_input_end - decoder_input_start),
-          gsl::span<char16_t>(intermediate_buffer,
-                              UTF16_INTERMEDIATE_BUFFER_SIZE),
-          input_ended);
+          gsl::as_span(input_buffer)
+            .subspan(decoder_input_start,
+                     decoder_input_end - decoder_input_start),
+          intermediate_buffer, input_ended);
       decoder_input_start += decoder_read;
 
       bool last_output = (input_ended && (decoder_result == INPUT_EMPTY));
@@ -180,11 +179,13 @@ convert_via_utf16(Decoder& decoder, Encoder& encoder, FILE* read, FILE* write,
 
         std::tie(encoder_result, encoder_read, encoder_written, std::ignore) =
           encoder.encode_from_utf16_with_replacement(
-            gsl::span<const char16_t>(intermediate_buffer + encoder_input_start,
-                                      decoder_written - encoder_input_start),
-            gsl::span<uint8_t>(output_buffer, OUTPUT_BUFFER_SIZE), last_output);
+            gsl::as_span(intermediate_buffer)
+              .subspan(encoder_input_start,
+                       decoder_written - encoder_input_start),
+            output_buffer, last_output);
         encoder_input_start += encoder_read;
-        size_t file_written = fwrite(output_buffer, 1, encoder_written, write);
+        size_t file_written =
+          fwrite(output_buffer.data(), 1, encoder_written, write);
         if (file_written != encoder_written) {
           fprintf(stderr, "Error writing output.");
           exit(-6);
