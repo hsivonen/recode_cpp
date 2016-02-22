@@ -13,7 +13,7 @@ LDFLAGS = -Wl,--gc-sections -ldl -lpthread -lgcc_s -lrt -lc -lm -lstdc++
 recode_cpp: recode_cpp.o ../encoding-rs/target/release/libencoding_rs.a
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-recode_c.o: recode_c.c ../encoding-rs/target/include/encoding_rs.h
+recode_cpp.o: recode_cpp.cpp ../encoding-rs/target/include/encoding_rs.h ../encoding-rs/include/encoding_rs_statics.h ../encoding-rs/include/encoding_rs_cpp.h ../GSL/include/gsl.h ../GSL/include/span.h
 
 ../encoding-rs/target/release/libencoding_rs.a: cargo
 
