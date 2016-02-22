@@ -11,7 +11,7 @@ Please see the file named COPYRIGHT.
 
 ## Building
 
-Git, GNU Make and a version of GCC recent enough to accept `-std=c11` are
+Git, GNU Make and a version of GCC recent enough to accept `-std=c++14` are
 assumed to be already installed.
 
 ###0. Install Rust (including Cargo) if you haven't already
