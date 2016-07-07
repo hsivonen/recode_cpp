@@ -77,7 +77,7 @@ convert_via_utf8(Decoder& decoder, Encoder& encoder, FILE* read, FILE* write,
       uint32_t decoder_result;
 
       std::tie(decoder_result, decoder_read, decoder_written, std::ignore) =
-        decoder.decode_to_utf8_with_replacement(
+        decoder.decode_to_utf8(
           gsl::as_span(input_buffer)
             .subspan(decoder_input_start,
                      decoder_input_end - decoder_input_start),
@@ -106,7 +106,7 @@ convert_via_utf8(Decoder& decoder, Encoder& encoder, FILE* read, FILE* write,
           uint32_t encoder_result;
 
           std::tie(encoder_result, encoder_read, encoder_written, std::ignore) =
-            encoder.encode_from_utf8_with_replacement(
+            encoder.encode_from_utf8(
               gsl::as_span(intermediate_buffer)
                 .subspan(encoder_input_start,
                          decoder_written - encoder_input_start),
@@ -158,7 +158,7 @@ convert_via_utf16(Decoder& decoder, Encoder& encoder, FILE* read, FILE* write,
       uint32_t decoder_result;
 
       std::tie(decoder_result, decoder_read, decoder_written, std::ignore) =
-        decoder.decode_to_utf16_with_replacement(
+        decoder.decode_to_utf16(
           gsl::as_span(input_buffer)
             .subspan(decoder_input_start,
                      decoder_input_end - decoder_input_start),
@@ -178,7 +178,7 @@ convert_via_utf16(Decoder& decoder, Encoder& encoder, FILE* read, FILE* write,
         uint32_t encoder_result;
 
         std::tie(encoder_result, encoder_read, encoder_written, std::ignore) =
-          encoder.encode_from_utf16_with_replacement(
+          encoder.encode_from_utf16(
             gsl::as_span(intermediate_buffer)
               .subspan(encoder_input_start,
                        decoder_written - encoder_input_start),
