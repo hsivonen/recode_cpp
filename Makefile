@@ -7,21 +7,21 @@
 # option. This file may not be copied, modified, or distributed
 # except according to those terms.
 
-CPPFLAGS = -Wall -Wextra -Werror -O3 -std=c++14 -I../encoding-rs/target/include/ -I../encoding-rs/include/ -I../GSL/include/
+CPPFLAGS = -Wall -Wextra -Werror -O3 -std=c++14 -I../encoding_rs/target/include/ -I../encoding_rs/include/ -I../GSL/include/
 LDFLAGS = -Wl,--gc-sections -ldl -lpthread -lgcc_s -lrt -lc -lm -lstdc++
 
-recode_cpp: recode_cpp.o ../encoding-rs/target/release/libencoding_rs.a
+recode_cpp: recode_cpp.o ../encoding_rs/target/release/libencoding_rs.a
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-recode_cpp.o: recode_cpp.cpp ../encoding-rs/target/include/encoding_rs.h ../encoding-rs/include/encoding_rs_statics.h ../encoding-rs/include/encoding_rs_cpp.h ../GSL/include/gsl.h ../GSL/include/span.h
+recode_cpp.o: recode_cpp.cpp ../encoding_rs/target/include/encoding_rs.h ../encoding_rs/include/encoding_rs_statics.h ../encoding_rs/include/encoding_rs_cpp.h ../GSL/include/gsl.h ../GSL/include/span.h
 
-../encoding-rs/target/release/libencoding_rs.a: cargo
+../encoding_rs/target/release/libencoding_rs.a: cargo
 
-../encoding-rs/target/include/encoding_rs.h: cargo
+../encoding_rs/target/include/encoding_rs.h: cargo
 
 .PHONY: cargo
 cargo:
-	cd ../encoding-rs; cargo build --release
+	cd ../encoding_rs; cargo build --release
 
 .PHONY: all
 all: recode_cpp

@@ -1,9 +1,9 @@
 # recode-cpp
 
 recode-cpp is a test/sample app that's written in C++ and uses
-[encoding-rs](https://github.com/hsivonen/encoding-rs).
+[encoding_rs](https://github.com/hsivonen/encoding_rs).
 
-It expects encoding-rs and [GSL](https://github.com/Microsoft/GSL) to have been checked out to adjacent directories.
+It expects encoding_rs and [GSL](https://github.com/Microsoft/GSL) to have been checked out to adjacent directories.
 
 ## Licensing
 
@@ -22,15 +22,15 @@ Linux and OS X, this means:
 curl -sSf https://static.rust-lang.org/rustup.sh | sh
 ```
 
-###1. Clone encoding-rs
+###1. Clone encoding_rs
 
 ```
-git clone https://github.com/hsivonen/encoding-rs.git
+git clone https://github.com/hsivonen/encoding_rs.git
 ```
 
-###2. Enable staticlib support for encoding-rs
+###2. Enable staticlib support for encoding_rs
 
-Edit `encoding-rs/Cargo.toml` and uncomment the line
+Edit `encoding_rs/Cargo.toml` and uncomment the line
 ```
 # crate-type = ["rlib", "staticlib"]
 ```
