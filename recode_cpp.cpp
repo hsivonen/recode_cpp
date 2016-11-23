@@ -234,7 +234,7 @@ main(int argc, char** argv)
 
   for (;;) {
     int option_index = 0;
-    int c = getopt_long(argc, argv, "o:e:g:uh", long_options, &option_index);
+    int c = getopt_long(argc, argv, "o:f:t:uh", long_options, &option_index);
     if (c == -1) {
       break;
     }
