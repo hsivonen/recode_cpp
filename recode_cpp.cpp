@@ -31,14 +31,14 @@ void
 print_usage(const char* program)
 {
   printf(
-    "Usage: %s [-e INPUT_ENCODING] [-g OUTPUT_ENCODING] [-o OUTFILE INFILE] "
+    "Usage: %s [-f INPUT_ENCODING] [-t OUTPUT_ENCODING] [-o OUTFILE INFILE] "
     "[...]\n\n"
     "Options:\n"
-    "    -o, --output-file PATH\n"
+    "    -o, --output PATH\n"
     "                        set output file name (- for stdout; the default)\n"
-    "    -e, --input-encoding LABEL\n"
+    "    -f, --from-code LABEL\n"
     "                        set input encoding (defaults to UTF-8)\n"
-    "    -g, --output-encoding LABEL\n"
+    "    -t, --to-code LABEL\n"
     "                        set output encoding (defaults to UTF-8)\n"
     "    -u, --utf16-intermediate\n"
     "                        use UTF-16 instead of UTF-8 as the intermediate\n"
@@ -219,11 +219,11 @@ int
 main(int argc, char** argv)
 {
   static struct option long_options[] = {
-    { "output-file", required_argument, NULL, 'o' },
-    { "input-encoding", required_argument, NULL, 'e' },
-    { "output-encoding", required_argument, NULL, 'g' },
-    { "utf16-intermediate", no_argument, NULL, 'u' },
-    { "help", no_argument, NULL, 'h' },
+      { "output", required_argument, NULL, 'o' },
+      { "from-code", required_argument, NULL, 'f' },
+      { "to-code", required_argument, NULL, 't' },
+      { "utf16-intermediate", no_argument, NULL, 'u' },
+      { "help", no_argument, NULL, 'h' },
     { 0, 0, 0, 0 }
   };
 
@@ -250,10 +250,10 @@ main(int argc, char** argv)
           exit(-3);
         }
         break;
-      case 'e':
+      case 'f':
         input_encoding = get_encoding(optarg);
         break;
-      case 'g':
+      case 't':
         output_encoding = get_encoding(optarg);
         break;
       case 'u':
