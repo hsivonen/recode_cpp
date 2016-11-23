@@ -16,10 +16,10 @@ assumed to be already installed.
 
 ###0. Install Rust (including Cargo) if you haven't already
 
-See the [Rust download page](https://www.rust-lang.org/downloads.html). For
+See [rustup.rs](https://rustup.rs/). For
 Linux and OS X, this means:
 ```
-curl -sSf https://static.rust-lang.org/rustup.sh | sh
+curl https://sh.rustup.rs -sSf | sh
 ```
 
 ###1. Clone encoding_rs
