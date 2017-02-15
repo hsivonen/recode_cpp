@@ -31,7 +31,7 @@ void
 print_usage(const char* program)
 {
   printf(
-    "Usage: %s [-f INPUT_ENCODING] [-t OUTPUT_ENCODING] [-o OUTFILE INFILE] "
+    "Usage: %s [-f INPUT_ENCODING] [-t OUTPUT_ENCODING] [-o OUTFILE] [INFILE] "
     "[...]\n\n"
     "Options:\n"
     "    -o, --output PATH\n"
