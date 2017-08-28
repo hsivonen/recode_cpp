@@ -7,10 +7,10 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <getopt.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "encoding_rs_cpp.h"
@@ -78,7 +78,7 @@ convert_via_utf8(Decoder& decoder, Encoder& encoder, FILE* read, FILE* write,
 
       std::tie(decoder_result, decoder_read, decoder_written, std::ignore) =
         decoder.decode_to_utf8(
-          gsl::as_span(input_buffer)
+          gsl::span<const uint8_t>(input_buffer)
             .subspan(decoder_input_start,
                      decoder_input_end - decoder_input_start),
           intermediate_buffer, input_ended);
@@ -107,7 +107,7 @@ convert_via_utf8(Decoder& decoder, Encoder& encoder, FILE* read, FILE* write,
 
           std::tie(encoder_result, encoder_read, encoder_written, std::ignore) =
             encoder.encode_from_utf8(
-              gsl::as_span(intermediate_buffer)
+              gsl::span<const uint8_t>(intermediate_buffer)
                 .subspan(encoder_input_start,
                          decoder_written - encoder_input_start),
               output_buffer, last_output);
@@ -159,7 +159,7 @@ convert_via_utf16(Decoder& decoder, Encoder& encoder, FILE* read, FILE* write,
 
       std::tie(decoder_result, decoder_read, decoder_written, std::ignore) =
         decoder.decode_to_utf16(
-          gsl::as_span(input_buffer)
+          gsl::span<const uint8_t>(input_buffer)
             .subspan(decoder_input_start,
                      decoder_input_end - decoder_input_start),
           intermediate_buffer, input_ended);
@@ -179,7 +179,7 @@ convert_via_utf16(Decoder& decoder, Encoder& encoder, FILE* read, FILE* write,
 
         std::tie(encoder_result, encoder_read, encoder_written, std::ignore) =
           encoder.encode_from_utf16(
-            gsl::as_span(intermediate_buffer)
+            gsl::span<const char16_t>(intermediate_buffer)
               .subspan(encoder_input_start,
                        decoder_written - encoder_input_start),
             output_buffer, last_output);
@@ -219,11 +219,11 @@ int
 main(int argc, char** argv)
 {
   static struct option long_options[] = {
-      { "output", required_argument, NULL, 'o' },
-      { "from-code", required_argument, NULL, 'f' },
-      { "to-code", required_argument, NULL, 't' },
-      { "utf16-intermediate", no_argument, NULL, 'u' },
-      { "help", no_argument, NULL, 'h' },
+    { "output", required_argument, NULL, 'o' },
+    { "from-code", required_argument, NULL, 'f' },
+    { "to-code", required_argument, NULL, 't' },
+    { "utf16-intermediate", no_argument, NULL, 'u' },
+    { "help", no_argument, NULL, 'h' },
     { 0, 0, 0, 0 }
   };
 

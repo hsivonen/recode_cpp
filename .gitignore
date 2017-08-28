@@ -5,3 +5,5 @@
 *~
 *.bk
 recode_cpp
+rustglue/target/
+rustglue/Cargo.lock

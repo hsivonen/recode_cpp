@@ -1,0 +1,17 @@
+[package]
+name = "rustglue"
+version = "0.1.0"
+authors = ["Henri Sivonen <hsivonen@hsivonen.fi>"]
+
+[dependencies]
+encoding_c = "0.8.0"
+
+[lib]
+crate-type = ["staticlib"]
+
+[profile.release]
+lto = true
+panic = 'abort'
+
+[profile.dev]
+panic = 'abort'
