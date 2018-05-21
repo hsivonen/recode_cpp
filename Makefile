@@ -7,7 +7,7 @@
 # option. This file may not be copied, modified, or distributed
 # except according to those terms.
 
-CPPFLAGS = -Wall -Wextra -Werror -O3 -std=c++14 -I../GSL/include/
+CPPFLAGS = -Wall -Wextra -Werror -O3 -std=c++17 -I../GSL/include/
 LDFLAGS = -Wl,--gc-sections -ldl -lpthread -lgcc_s -lrt -lc -lm -lstdc++
 
 recode_cpp: recode_cpp.o rustglue/target/release/librustglue.a
@@ -26,7 +26,7 @@ all: recode_cpp
 
 .PHONY: fmt
 fmt:
-	clang-format-3.8 --style=mozilla -i *.cpp
+	clang-format-6.0 --style=mozilla -i *.cpp
 
 .PHONY: clean
 clean:

@@ -8,12 +8,15 @@
 // except according to those terms.
 
 #include <getopt.h>
+#include <iterator>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "encoding_rs_cpp.h"
+
+using namespace encoding_rs;
 
 const Encoding*
 get_encoding(const char* label)
@@ -53,7 +56,10 @@ print_usage(const char* program)
 #define OUTPUT_BUFFER_SIZE 4096
 
 void
-convert_via_utf8(Decoder& decoder, Encoder& encoder, FILE* read, FILE* write,
+convert_via_utf8(Decoder& decoder,
+                 Encoder& encoder,
+                 FILE* read,
+                 FILE* write,
                  bool last)
 {
   std::array<uint8_t, INPUT_BUFFER_SIZE> input_buffer;
@@ -81,7 +87,8 @@ convert_via_utf8(Decoder& decoder, Encoder& encoder, FILE* read, FILE* write,
           gsl::span<const uint8_t>(input_buffer)
             .subspan(decoder_input_start,
                      decoder_input_end - decoder_input_start),
-          intermediate_buffer, input_ended);
+          intermediate_buffer,
+          input_ended);
       decoder_input_start += decoder_read;
 
       bool last_output = (input_ended && (decoder_result == INPUT_EMPTY));
@@ -107,10 +114,13 @@ convert_via_utf8(Decoder& decoder, Encoder& encoder, FILE* read, FILE* write,
 
           std::tie(encoder_result, encoder_read, encoder_written, std::ignore) =
             encoder.encode_from_utf8(
-              gsl::span<const uint8_t>(intermediate_buffer)
-                .subspan(encoder_input_start,
-                         decoder_written - encoder_input_start),
-              output_buffer, last_output);
+              std::string_view(
+                reinterpret_cast<char*>(intermediate_buffer.data()),
+                intermediate_buffer.size())
+                .substr(encoder_input_start,
+                        decoder_written - encoder_input_start),
+              output_buffer,
+              last_output);
           encoder_input_start += encoder_read;
           size_t file_written =
             fwrite(output_buffer.data(), 1, encoder_written, write);
@@ -134,7 +144,10 @@ convert_via_utf8(Decoder& decoder, Encoder& encoder, FILE* read, FILE* write,
 }
 
 void
-convert_via_utf16(Decoder& decoder, Encoder& encoder, FILE* read, FILE* write,
+convert_via_utf16(Decoder& decoder,
+                  Encoder& encoder,
+                  FILE* read,
+                  FILE* write,
                   bool last)
 {
   std::array<uint8_t, INPUT_BUFFER_SIZE> input_buffer;
@@ -162,7 +175,8 @@ convert_via_utf16(Decoder& decoder, Encoder& encoder, FILE* read, FILE* write,
           gsl::span<const uint8_t>(input_buffer)
             .subspan(decoder_input_start,
                      decoder_input_end - decoder_input_start),
-          intermediate_buffer, input_ended);
+          intermediate_buffer,
+          input_ended);
       decoder_input_start += decoder_read;
 
       bool last_output = (input_ended && (decoder_result == INPUT_EMPTY));
@@ -179,10 +193,12 @@ convert_via_utf16(Decoder& decoder, Encoder& encoder, FILE* read, FILE* write,
 
         std::tie(encoder_result, encoder_read, encoder_written, std::ignore) =
           encoder.encode_from_utf16(
-            gsl::span<const char16_t>(intermediate_buffer)
-              .subspan(encoder_input_start,
-                       decoder_written - encoder_input_start),
-            output_buffer, last_output);
+            std::u16string_view(intermediate_buffer.data(),
+                                intermediate_buffer.size())
+              .substr(encoder_input_start,
+                      decoder_written - encoder_input_start),
+            output_buffer,
+            last_output);
         encoder_input_start += encoder_read;
         size_t file_written =
           fwrite(output_buffer.data(), 1, encoder_written, write);
@@ -205,7 +221,11 @@ convert_via_utf16(Decoder& decoder, Encoder& encoder, FILE* read, FILE* write,
 }
 
 void
-convert(Decoder& decoder, Encoder& encoder, FILE* read, FILE* write, bool last,
+convert(Decoder& decoder,
+        Encoder& encoder,
+        FILE* read,
+        FILE* write,
+        bool last,
         bool use_utf16)
 {
   if (use_utf16) {
