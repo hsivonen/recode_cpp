@@ -3,8 +3,9 @@ name = "rustglue"
 version = "0.1.0"
 authors = ["Henri Sivonen <hsivonen@hsivonen.fi>"]
 
-[dependencies]
-encoding_c = "0.8.0"
+[dependencies.encoding_c]
+version = "0.9.1"
+features = ["fast-legacy-encode"]
 
 [lib]
 crate-type = ["staticlib"]
